@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=KUSH
+GenericName=Malware Analysis Framework
+Comment=Authorized malware sample analysis, IOC extraction, and threat classification without sample execution
+Exec=@PREFIX@/bin/kush
+Icon=@PREFIX@/share/icons/hicolor/512x512/apps/kush.png
+Terminal=true
+Categories=Development;Security;Utility;
+Keywords=malware;analysis;ioc;threat;static;security;
