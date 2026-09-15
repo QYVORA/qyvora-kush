@@ -8,6 +8,7 @@ package analysis
 
 import (
 	"context"
+	"sort"
 
 	"github.com/QYVORA/qyvora-kush/internal/errors"
 	"github.com/QYVORA/qyvora-kush/internal/events"
@@ -214,7 +215,7 @@ func Stages(reg *rules.Registry, cfg map[string]any, maxEntries int) []pipeline.
 					Config: cfg,
 				}
 				sink := rules.NewSink()
-				if err := reg.Run(ctx, env, sink); err != nil {
+				if err := reg.RunProfile(ctx, env, sink, profileOf(cfg)); err != nil {
 					return err
 				}
 				for _, f := range sink.List() {
@@ -240,6 +241,9 @@ func Stages(reg *rules.Registry, cfg map[string]any, maxEntries int) []pipeline.
 				step.Result.Score = score
 				step.Result.Level = level
 				step.Result.Evidence = step.Evidence.List()
+				sort.Slice(step.Result.Evidence, func(i, j int) bool {
+					return step.Result.Evidence[i].Hash < step.Result.Evidence[j].Hash
+				})
 				if step.Events != nil {
 					step.Events.Info(events.RiskCalculated, map[string]any{
 						"score": score, "level": level, "findings": len(step.Result.Findings),
@@ -263,15 +267,33 @@ func currentSample(step *pipeline.Step) (*malware.Sample, error) {
 	if step == nil || step.Target == nil {
 		return nil, errors.NewExitError(1, "assessment requires a sample or simulation target")
 	}
-	if step.Sim {
-		return malware.Simulate(malware.SimulationOptions{}), nil
-	}
-	if step.Target.Type != models.TargetSnapshot {
-		return nil, errors.NewExitError(1, "unsupported target: dynamic execution and live sandboxing are not implemented; provide a sample document file")
-	}
-	s, err := malware.LoadFile(step.Target.Value)
+	v, err := step.Cached("input:malware", func() (any, error) {
+		if step.Sim {
+			return malware.Simulate(malware.SimulationOptions{}), nil
+		}
+		if step.Target.Type != models.TargetSnapshot {
+			return nil, errors.NewExitError(1, "unsupported target: dynamic execution and live sandboxing are not implemented; provide a sample document file")
+		}
+		s, err := malware.LoadFile(step.Target.Value)
+		if err != nil {
+			return nil, errors.WrapExitError(1, "loading sample", err)
+		}
+		return s, nil
+	})
 	if err != nil {
-		return nil, errors.WrapExitError(1, "loading sample", err)
+		return nil, err
 	}
-	return s, nil
+	return v.(*malware.Sample), nil
+}
+
+// profileOf returns the named assessment profile, defaulting to standard
+// when the configuration does not select one.
+func profileOf(cfg map[string]any) string {
+	if p, ok := cfg["profile"].(string); ok && p != "" {
+		return p
+	}
+	// No profile selected falls through to the full rule set so pipeline
+	// invocations without an explicit profile behave exactly as before the
+	// profile filter existed. The CLI always resolves an explicit profile.
+	return ""
 }
