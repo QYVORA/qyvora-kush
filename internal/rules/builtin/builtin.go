@@ -7,6 +7,7 @@ package builtin
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/QYVORA/qyvora-kush/internal/analysis"
@@ -31,6 +32,8 @@ func All() []rules.Rule {
 		&highConfidenceIOCs{},
 		&behaviorAnomalies{},
 		&unverifiedDynamic{},
+		&injectionPrimitives{},
+		&writableExecutableSection{},
 	}
 }
 
@@ -112,13 +115,14 @@ func (r *packedBinary) Run(_ context.Context, envAny any, sink *rules.Sink) erro
 		}
 	}
 	attrs["high_entropy_sections"] = itoa(high)
+	attrs["entry_point"] = env.Sample.Metadata.EP
+	attrs["overlay_size"] = itoa(env.Sample.Metadata.Overlay)
 	ev := env.AddEvidence(models.EvidenceObservation, "static", "metadata",
 		env.Sample.Metadata.Packer, "packer or high-entropy sections present")
 	if env.Events != nil {
 		env.Events.Info(events.StaticAnalyzed, map[string]any{"packed": true, "high_entropy_sections": high})
 	}
-	sink.Add(newFinding(r.Meta(), env, []string{"sample:" + env.Sample.SampleID},
-		map[string]string{"packer": env.Sample.Metadata.Packer, "high_entropy_sections": itoa(high)}, ev))
+	sink.Add(newFinding(r.Meta(), env, []string{"sample:" + env.Sample.SampleID}, attrs, ev))
 	return nil
 }
 
@@ -323,20 +327,24 @@ func (r *networkPrivilegeImports) Run(_ context.Context, envAny any, sink *rules
 type highConfidenceIOCs struct{}
 
 func (r *highConfidenceIOCs) Meta() rules.Meta {
-	return metadata("KSH-010", "High-confidence IOC catalog", "ioc",
-		"The analysis surfaced IOCs its own model rates as high confidence; "+
+	return metadata("KSH-010", "Verified high-confidence IOC catalog", "ioc",
+		"The analysis surfaced high-confidence IOCs whose values are corroborated "+
+			"by the sample's own surfaces (hashes, strings, network or behavior); "+
 			"each is directly consumable by detection and response tooling.",
-		"Push the values into the SIEM/EDR allow-or-alert sets for matching.",
+		"Push the verified values into the SIEM/EDR allow-or-alert sets for matching.",
 		models.SeverityInformational)
 }
 
 func (r *highConfidenceIOCs) Run(_ context.Context, envAny any, sink *rules.Sink) error {
 	env := envAny.(*analysis.Env)
-	for _, ioc := range malware.HighConfidenceIOCs(env.Sample) {
+	for _, ioc := range malware.VerifiedIOCs(env.Sample) {
+		if !strings.EqualFold(ioc.Confidence, "high") {
+			continue
+		}
 		ev := env.AddEvidence(models.EvidenceObservation, ioc.Source, ioc.ID,
-			ioc.Value, ioc.Note)
+			ioc.Value, ioc.Note+" (verified against sample surfaces)")
 		attrs := map[string]string{"type": ioc.Type, "value": ioc.Value,
-			"confidence": ioc.Confidence, "source": ioc.Source}
+			"confidence": ioc.Confidence, "source": ioc.Source, "verified": "true"}
 		if ioc.Type == "file_hash" {
 			attrs["value"] = shortHash(ioc.Value)
 		}
@@ -405,6 +413,57 @@ func shortHash(h string) string {
 		return h
 	}
 	return h[:12] + "…"
+}
+
+// ---------------------------------------------------------------------------
+// Injection primitives and W^X sections
+
+type injectionPrimitives struct{}
+
+func (r *injectionPrimitives) Meta() rules.Meta {
+	return metadata("KSH-013", "Process injection primitives", "execution",
+		"The sample imports the classic cross-process injection API set "+
+			"(remote allocation, process memory write, remote thread or APC "+
+			"injection). Copying code into another process is a hallmark of "+
+			"banking trojans and post-exploitation agents.",
+		"Verify the importing module against the application contract; otherwise "+
+			"treat as a high-priority containment signal.",
+		models.SeverityHigh)
+}
+
+func (r *injectionPrimitives) Run(_ context.Context, envAny any, sink *rules.Sink) error {
+	env := envAny.(*analysis.Env)
+	for _, im := range malware.InjectionImports(env.Sample) {
+		ev := env.AddEvidence(models.EvidenceObservation, "static", "imports",
+			im.Function, "process-injection primitive imported from "+im.Library)
+		sink.Add(newFinding(r.Meta(), env, []string{"import:" + strings.ToLower(im.Library) + ":" + im.Function},
+			map[string]string{"library": im.Library, "function": im.Function}, ev))
+	}
+	return nil
+}
+
+type writableExecutableSection struct{}
+
+func (r *writableExecutableSection) Meta() rules.Meta {
+	return metadata("KSH-014", "Writable-and-executable section", "obfuscation",
+		"A section is mapped writable and executable at once, the W^X violation "+
+			"that allows an unpacker or loader to write its own payload into "+
+			"live code pages.",
+		"Correlate the section with a declared packer; if unpacked code persists "+
+			"in memory, treat the mapped section as stage-two content.",
+		models.SeverityMedium)
+}
+
+func (r *writableExecutableSection) Run(_ context.Context, envAny any, sink *rules.Sink) error {
+	env := envAny.(*analysis.Env)
+	for _, sec := range malware.WritableExecutableSections(env.Sample) {
+		ev := env.AddEvidence(models.EvidenceObservation, "static", "section",
+			sec.Name, "section flags grant write and execute ("+sec.Flags+")")
+		sink.Add(newFinding(r.Meta(), env, []string{"section:" + sec.Name},
+			map[string]string{"section": sec.Name, "flags": sec.Flags,
+				"entropy": fmt.Sprintf("%.2f", sec.Entropy)}, ev))
+	}
+	return nil
 }
 
 func boolStr(b bool) string {
