@@ -50,7 +50,7 @@ builds once the first verifiable release exists.
 Full assessment, no input required, deterministic:
 
 ```sh
-kush assess --sim       # risk 73/100 (high)
+kush assess --sim       # risk 100/100 (critical)
 ```
 
 Generate a sample malware document and assess it:

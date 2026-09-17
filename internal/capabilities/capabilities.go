@@ -64,8 +64,8 @@ func Build() Document {
 		EventVerbs: []string{
 			events.ScanStarted, events.ScanCompleted, events.StageStarted,
 			events.StageCompleted, events.FindingDiscovered,
-			events.EvidenceCollected, events.SampleTaken,
-			events.HashCalculated, events.MetadataExtracted,
+			events.SampleTaken, events.HashCalculated,
+			events.MetadataExtracted,
 			events.StaticAnalyzed, events.StringsAnalyzed,
 			events.BehaviorAnalyzed, events.NetworkIndicators,
 			events.IOCTaken, events.ThreatClassified, events.RiskCalculated,

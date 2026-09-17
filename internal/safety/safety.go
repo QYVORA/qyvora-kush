@@ -2,10 +2,11 @@
 //
 // Every operation carries metadata describing its class, risk, authorization
 // requirement, whether it changes remote state, and whether it is reversible.
-// Cloud assessments are read-only and offline by default: snapshot and
-// simulation analysis need no authorization and never contact a provider.
-// Live provider collection is not implemented and is refused with an honest
-// error rather than faked.
+// Malware triage is read-only and offline by default: sample-document analysis
+// needs no authorization, never executes a sample and never contacts a
+// network. Host execution and live dynamic analysis are not implemented and
+// are refused with an honest error rather than faked — analysis is static
+// only (KSH-012).
 package safety
 
 import "github.com/QYVORA/qyvora-kush/pkg/models"
@@ -35,34 +36,37 @@ type OperationMetadata struct {
 
 // Known operations.
 var (
-	// OpSnapshotParse analyzes an offline cloud snapshot. Read-only, no auth.
-	OpSnapshotParse = OperationMetadata{
-		ID: "kush.snapshot.parse", Name: "cloud snapshot analysis",
-		Description: "Parse and analyze an offline cloud snapshot file.",
-		Class:       ClassDiscovery, Risk: models.RiskS1, TargetType: "snapshot",
+	// OpSampleParse triages an offline malware sample document. Read-only,
+	// no auth, statically bounded.
+	OpSampleParse = OperationMetadata{
+		ID: "kush.sample.parse", Name: "sample document triage",
+		Description: "Parse a static malware sample document for offline triage.",
+		Class:       ClassDiscovery, Risk: models.RiskS1, TargetType: "sample",
 		AuthRequired: false, Confirm: false, ChangesState: false, Reversible: true,
 	}
-	// OpAnalyze runs the analysis pipeline over collected assets. Read-only.
+	// OpAnalyze runs the static analysis pipeline over a parsed sample.
+	// Read-only, bounded to sample files only (never host execution).
 	OpAnalyze = OperationMetadata{
-		ID: "kush.analyze", Name: "cloud configuration analysis",
-		Description: "Run IAM, storage, network, container, secret and misconfiguration analysis.",
-		Class:       ClassAnalysis, Risk: models.RiskS1, TargetType: "any",
+		ID: "kush.analyze", Name: "sample static analysis",
+		Description: "Run static analysis rules for packers, indicators, behavior and threat classification.",
+		Class:       ClassAnalysis, Risk: models.RiskS1, TargetType: "sample",
 		AuthRequired: false, Confirm: false, ChangesState: false, Reversible: true,
 	}
-	// OpLiveProvider would contact a real cloud control plane. Not implemented.
-	OpLiveProvider = OperationMetadata{
-		ID: "kush.live.provider", Name: "live provider collection",
-		Description: "Query a live cloud provider API (NOT IMPLEMENTED).",
-		Class:       ClassLiveProvider, Risk: models.RiskS2, TargetType: "provider",
-		AuthRequired: true, Confirm: true, ChangesState: false, Reversible: true,
+	// OpHostExecution would run a sample on this host. Not implemented:
+	// triage is static only and host execution is refused (KSH-012).
+	OpHostExecution = OperationMetadata{
+		ID: "kush.host.execution", Name: "host execution of a sample",
+		Description: "Execute a sample on the host (NOT IMPLEMENTED — static-only triage; KSH-012 refuses host execution).",
+		Class:       ClassLiveProvider, Risk: models.RiskS2, TargetType: "host",
+		AuthRequired: true, Confirm: true, ChangesState: true, Reversible: false,
 	}
 )
 
 // Implemented reports whether an operation actually exists in this build.
-// Live provider collection is deliberately not implemented; calling it
-// must produce an honest error rather than pretend capability.
+// Host execution is deliberately not implemented; calling it must produce an
+// honest error rather than pretend capability.
 func (op OperationMetadata) Implemented() bool {
-	return op.ID != OpLiveProvider.ID
+	return op.ID != OpHostExecution.ID
 }
 
 // RequiresAuthorization reports whether an operation only runs on an
