@@ -27,6 +27,7 @@ type OperationMetadata struct {
 	Description  string           `json:"description"`
 	Class        Class            `json:"class"`
 	Risk         models.RiskLevel `json:"risk"`
+	NoiseLevel   models.NoiseLevel   `json:"noise_level"`
 	TargetType   string           `json:"target_type"`
 	AuthRequired bool             `json:"authorization_required"`
 	Confirm      bool             `json:"confirmation_required"`
@@ -41,7 +42,7 @@ var (
 	OpSampleParse = OperationMetadata{
 		ID: "kush.sample.parse", Name: "sample document triage",
 		Description: "Parse a static malware sample document for offline triage.",
-		Class:       ClassDiscovery, Risk: models.RiskS1, TargetType: "sample",
+		Class:       ClassDiscovery, Risk: models.RiskS1, NoiseLevel: models.NoiseLevelPassive, TargetType: "sample",
 		AuthRequired: false, Confirm: false, ChangesState: false, Reversible: true,
 	}
 	// OpAnalyze runs the static analysis pipeline over a parsed sample.
@@ -49,7 +50,7 @@ var (
 	OpAnalyze = OperationMetadata{
 		ID: "kush.analyze", Name: "sample static analysis",
 		Description: "Run static analysis rules for packers, indicators, behavior and threat classification.",
-		Class:       ClassAnalysis, Risk: models.RiskS1, TargetType: "sample",
+		Class:       ClassAnalysis, Risk: models.RiskS1, NoiseLevel: models.NoiseLevelPassive, TargetType: "sample",
 		AuthRequired: false, Confirm: false, ChangesState: false, Reversible: true,
 	}
 	// OpHostExecution would run a sample on this host. Not implemented:
@@ -57,7 +58,7 @@ var (
 	OpHostExecution = OperationMetadata{
 		ID: "kush.host.execution", Name: "host execution of a sample",
 		Description: "Execute a sample on the host (NOT IMPLEMENTED — static-only triage; KSH-012 refuses host execution).",
-		Class:       ClassLiveProvider, Risk: models.RiskS2, TargetType: "host",
+		Class:       ClassLiveProvider, Risk: models.RiskS2, NoiseLevel: models.NoiseLevelModerate, TargetType: "host",
 		AuthRequired: true, Confirm: true, ChangesState: true, Reversible: false,
 	}
 )
