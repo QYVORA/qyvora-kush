@@ -79,8 +79,8 @@ QYVORA_MIN_GO="1.26"
 QYVORA_ICON="kush.png"
 QYVORA_ICO="kush.ico"
 QYVORA_DESKTOP_NAME="KUSH"
-QYVORA_DESKTOP_COMMENT="Kernel and embedded firmware security analysis"
-QYVORA_DESKTOP_KEYWORDS="firmware;kernel;embedded;binwalk;iot;uboot;bootloader;reverse"
+QYVORA_DESKTOP_COMMENT="Offline malware sample analysis"
+QYVORA_DESKTOP_KEYWORDS="malware;sample;static-analysis;ioc;strings;threat;classification"
 # Ordered probes used to prove the installed binary runs
 QYVORA_VERSION_PROBE="--version version --help"
 # Additional .desktop entry, if the upstream asset ships one
