@@ -32,4 +32,4 @@ _No report-tier modules._
 | `kush sources` | list supported sample sources and their status |
 | `kush target` | manage assessment targets (sample documents and simulation) |
 | `kush tui` | start the interactive terminal application |
-
+| `docs script <file>` | Run a `.qs` script with the shared scripting engine (`run`/`build` subcommands) |
