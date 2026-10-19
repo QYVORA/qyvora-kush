@@ -20,6 +20,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/QYVORA/qyvora-kush/internal/analysis"
+	"github.com/QYVORA/qyvora-kush/internal/banner"
 	"github.com/QYVORA/qyvora-kush/internal/capabilities"
 	"github.com/QYVORA/qyvora-kush/internal/config"
 	pexit "github.com/QYVORA/qyvora-kush/internal/errors"
@@ -175,7 +176,7 @@ func (a *App) rootCommand() *cobra.Command {
 	root := &cobra.Command{
 		Use:           "kush",
 		Short:         "QYVORA malware analysis framework",
-		Long:          "kush analyzes offline sample documents and deterministic simulations for hashes, metadata, static posture, strings, network indicators, IOC extraction and threat classification. Samples are never executed on the developer host; dynamic execution is not implemented and is refused honestly.",
+		Long:          banner.Render() + "\n\n  " + banner.Tagline + " — " + version.CompanyName + "\n  " + version.CompanyURL + "\n  Built in " + version.CompanyCity + "\n\n" + "kush analyzes offline sample documents and deterministic simulations for hashes, metadata, static posture, strings, network indicators, IOC extraction and threat classification. Samples are never executed on the developer host; dynamic execution is not implemented and is refused honestly.",
 		Version:       version.Version,
 		SilenceUsage:  true,
 		SilenceErrors: true,
