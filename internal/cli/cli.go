@@ -176,7 +176,7 @@ func (a *App) rootCommand() *cobra.Command {
 	root := &cobra.Command{
 		Use:           "kush",
 		Short:         "QYVORA malware analysis framework",
-		Long:          banner.Render() + "\n\n  " + banner.Tagline + " — " + version.CompanyName + "\n  " + version.CompanyURL + "\n  Built in " + version.CompanyCity + "\n\n" + "kush analyzes offline sample documents and deterministic simulations for hashes, metadata, static posture, strings, network indicators, IOC extraction and threat classification. Samples are never executed on the developer host; dynamic execution is not implemented and is refused honestly.",
+		Long:          banner.Render() + "\n\n  " + banner.Tagline + " — " + version.CompanyName + "\n  " + version.CompanyURL + "\n  Built in " + version.CompanyCity + "\n\n" + "kush analyzes offline sample documents and deterministic simulations for hashes, metadata, static posture, strings, network indicators, IOC extraction and threat classification. Samples are never executed on the developer host; dynamic execution is not implemented and is refused honestly." + "\n\nCommands follow the shared tier grammar\nkush <tier> <module> [<action>] [target] [flags], where the tier is one of\nrecon, exploit, or report. Run it with no arguments to print this help;\nassessment is one-shot.",
 		Version:       version.Version,
 		SilenceUsage:  true,
 		SilenceErrors: true,
