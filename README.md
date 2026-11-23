@@ -1,23 +1,22 @@
 # Kush
 
 > **Offline malware sample analysis framework.**
-> A terminal-first console and CLI for static sample analysis: hashes,
-> metadata, static posture, strings, network indicators, IOC extraction
-> and threat classification — without ever executing the sample.
+> A one-shot CLI for static sample analysis: hashes, metadata, static
+> posture, strings, network indicators, IOC extraction and threat
+> classification — without ever executing the sample.
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 ## Overview
 
 Kush is QYVORA's offline malware sample analysis framework. It runs as a
-shared terminal-first console **and** a one-shot CLI with identical
-commands, and produces evidence-backed findings with transparent risk
+one-shot CLI and produces evidence-backed findings with transparent risk
 scoring. **Samples are never executed on the developer host**: dynamic
 execution is not implemented and is refused honestly; behavioral findings
 may only come from an isolated sandbox you attach explicitly.
 
-- **One workflow, two surfaces** — the console commands equal the CLI
-  commands.
+- **One workflow, one surface** — every assessment runs through the one-shot
+  CLI.
 - **Deterministic `--sim`** — fixed dataset exercises every rule, no
   executing anything, CI-ready.
 - **Never executes** — static read-only analysis on your host; `KSH-012`
@@ -60,15 +59,10 @@ kush sample --sim
 kush assess sample.sim.json
 ```
 
-Interactive console (REPL on a real terminal; stdin piping uses a plain line reader):
-
-```sh
-kush
-assess --sim
-findings
-evidence
-exit
-```
+The interactive console is retired and unavailable in this release. The
+per-tool TUI is excluded from builds (`//go:build ignore`) pending the redirect
+of qyvora-tui to the future AI orchestration layer; a bare invocation prints
+CLI usage. Use the one-shot commands above.
 
 Machine-readable output:
 
@@ -83,7 +77,6 @@ kush report -o json
 ```
 assess        run the analysis pipeline against a sample or simulation
 capabilities  print the machine-readable capability contract
-console       start the interactive assessment console
 evidence      inspect the latest assessment evidence
 findings      inspect the latest assessment findings
 report        render the latest assessment report from disk

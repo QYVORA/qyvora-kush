@@ -1,0 +1,14 @@
+{
+  "schema": "qyvora.kush.sample.v1",
+  "sample_id": "SAMPLE-EXAMPLE-001",
+  "name": "example.bin",
+  "source": "package",
+  "format": "elf",
+  "size": 4096,
+  "hashes": [
+    {
+      "algorithm": "sha256",
+      "value": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  ]
+}
