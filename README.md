@@ -7,6 +7,10 @@
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
+## Readiness
+
+**BETA.** Kush performs offline malware static analysis and sample triage; samples are never executed and no sandbox connector ships. Implementation exists for exploration/testing but has not received final production-readiness approval. Its owner classification is `BETA` in the [Product Registry](../../../../knowledge/qyvora-docs/07-products/PRODUCT-REGISTRY.md); shipped implementation and tags do not promote it to `AVAILABLE`.
+
 ## Overview
 
 Kush is QYVORA's offline malware sample analysis framework. It runs as a
